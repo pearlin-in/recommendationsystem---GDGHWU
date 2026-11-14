@@ -16,11 +16,9 @@ Type in a movie, song or book you like and get the 5 most similar items back. Al
 6. [Session 1: Foundations and TF-IDF baseline](#6-session-1-foundations-and-tf-idf-baseline)
 7. [Session 2: Embeddings, evaluation and app](#7-session-2-embeddings-evaluation-and-app)
 8. [Starter code](#8-starter-code)
-9. [Free-tier survival guide](#9-free-tier-survival-guide)
-10. [Troubleshooting](#10-troubleshooting)
-11. [Stretch goals](#11-stretch-goals)
-12. [Organiser checklist](#12-organiser-checklist)
-13. [Credits and licenses](#13-credits-and-licenses)
+9. [Troubleshooting](#10-troubleshooting)
+10. [Stretch goals](#11-stretch-goals)
+11. [Credits and licenses](#13-credits-and-licenses)
 
 ---
 

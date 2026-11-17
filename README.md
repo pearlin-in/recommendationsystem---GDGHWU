@@ -4,6 +4,11 @@ Type in a movie, song or book you like and get the 5 most similar items back. Al
 
 > No installation, no GPU, no paid services. Everything runs in a free Google Colab notebook.
 
+| Notebook | Starter (with TODOs) | Solution (checkpoint) |
+|---|---|---|
+| Session 1: Foundations and TF-IDF | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pearlin-in/recommendationsystem---GDGHWU/blob/main/notebooks/session1_starter.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pearlin-in/recommendationsystem---GDGHWU/blob/main/notebooks/session1_solution.ipynb) |
+| Session 2: Embeddings, evaluation, Gemini and app | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pearlin-in/recommendationsystem---GDGHWU/blob/main/notebooks/session2_starter.ipynb) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pearlin-in/recommendationsystem---GDGHWU/blob/main/notebooks/session2_solution.ipynb) |
+
 ---
 
 ## Table of contents
@@ -16,9 +21,9 @@ Type in a movie, song or book you like and get the 5 most similar items back. Al
 6. [Session 1: Foundations and TF-IDF baseline](#6-session-1-foundations-and-tf-idf-baseline)
 7. [Session 2: Embeddings, evaluation and app](#7-session-2-embeddings-evaluation-and-app)
 8. [Starter code](#8-starter-code)
-9. [Troubleshooting](#10-troubleshooting)
-10. [Stretch goals](#11-stretch-goals)
-11. [Credits and licenses](#13-credits-and-licenses)
+9. [Troubleshooting](#9-troubleshooting)
+10. [Stretch goals](#10-stretch-goals)
+11. [Credits and licenses](#11-credits-and-licenses)
 
 ---
 
@@ -37,8 +42,18 @@ A **content-based recommender**: it looks at what an item *is* (genres, descript
 | 3. Measure similarity | Cosine similarity (angle between vectors) | scikit-learn, NumPy |
 | 4. Recommend | Sort by similarity and return the top 5 | NumPy |
 | 5. Ship it | Search box with results, shareable link | Gradio |
+| 6. Explain it | One-line "why you'll like it" for each pick | Gemini |
 
 **Why this is unsupervised learning:** nobody tells the model what the "right" recommendation is. There are no labels. It discovers structure (which items are close together) from the data alone.
+
+### Google tools used in this workshop
+
+| Tool | What we use it for | Cost |
+|---|---|---|
+| **Google Colab** | Runs every notebook in the browser, with no installs | Free |
+| **Google Drive** | Optional cache for embeddings, so a disconnect costs seconds, not minutes | Free |
+| **Gemini** (Colab built-in or [Google AI Studio](https://aistudio.google.com) API key) | Explains each recommendation in plain English (retrieval-augmented generation) | Free tier |
+| **Colab > Save a copy in GitHub** | Publish your finished notebook for your CV | Free |
 
 ---
 
@@ -55,7 +70,7 @@ A **content-based recommender**: it looks at what an item *is* (genres, descript
 ### 3.1 First-time setup
 
 1. Go to [colab.research.google.com](https://colab.research.google.com) and sign in with your Google account.
-2. Click **File > Open notebook > GitHub tab**, paste the repository URL, and open `notebooks/session1_starter.ipynb`.
+2. Click the **Open in Colab** badge for Session 1 at the top of this page. Or click **File > Open notebook > GitHub tab**, paste the repository URL, and open `notebooks/session1_starter.ipynb`.
 3. Click **File > Save a copy in Drive** so your changes are saved to your own account.
 4. Check the runtime: **Runtime > Change runtime type**. Leave it on **CPU** (the default). Everything in this workshop is designed to work on CPU. If a GPU (T4) is available you can switch to it to speed up Session 2 but do not depend on it.
 5. Click **Connect** (top right). Wait for the green check mark.
@@ -71,10 +86,10 @@ Press `Shift + Enter` to run a cell.
 
 ### 3.3 Install the extra libraries
 
-Colab already includes pandas, NumPy, scikit-learn, matplotlib and `datasets`. We only need two extra packages:
+Colab already includes pandas, NumPy, scikit-learn, matplotlib and `datasets`. Session 1 needs nothing else. Session 2 needs two extra packages, plus Google's Gemini SDK `google-genai` (usually preinstalled on Colab, listed to be safe):
 
 ```python
-!pip install -q sentence-transformers gradio
+!pip install -q sentence-transformers gradio google-genai
 ```
 
 > If you see a prompt to **restart the runtime** after installing, click **Runtime > Restart session** and then run the cells from the top again (skip the install cell).
@@ -94,6 +109,20 @@ np.save('/content/drive/MyDrive/movie_embeddings.npy', emb)
 # later:
 emb = np.load('/content/drive/MyDrive/movie_embeddings.npy')
 ```
+
+In Session 2 just set `USE_DRIVE = True` in the setup cell. The notebook then caches its slow results in `MyDrive/recsys-workshop/` for you.
+
+### 3.5 Optional: Gemini (free) for explanations
+
+Session 2 asks Gemini to explain each recommendation. There are two free ways to use it, and the notebook picks whichever is available:
+
+1. **No setup, Colab only:** Colab's built-in Gemini access (`from google.colab import ai`) needs no API key.
+2. **Your own API key, works everywhere (including a deployed app):**
+   1. Create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+   2. In Colab, click the 🔑 **Secrets** icon in the left sidebar. Add a secret named `GOOGLE_API_KEY` (or use **Gemini API keys > Import key**), and switch on **Notebook access**.
+   3. The notebook reads it with `google.colab.userdata.get("GOOGLE_API_KEY")`. Never paste the key into a code cell.
+
+Gemini is optional: without it, every other part of the workshop works.
 
 ---
 
@@ -196,19 +225,25 @@ This only has genres, so it is weak for content-based recommendations. It is bet
 ## 5. Repository structure
 
 ```
-recsys-workshop/
+recommendationsystem---GDGHWU/
 ├── README.md
 ├── notebooks/
-│   ├── session1_starter.ipynb      # scaffolded, with TODOs
-│   ├── session1_solution.ipynb
+│   ├── session1_starter.ipynb      # scaffolded, with ✏️ TODOs and 🧪 auto-checks
+│   ├── session1_solution.ipynb     # every TODO filled in (checkpoint)
 │   ├── session2_starter.ipynb
 │   └── session2_solution.ipynb
-├── data/                            # backup copies of datasets (small files only)
-├── embeddings/                      # precomputed .npy files for fast-forward
+├── data/                            # backup copies of the datasets, used automatically if a download fails
+│   ├── tmdb_5000_movies.parquet
+│   ├── spotify_tracks.csv.gz
+│   └── books_enriched.csv.gz
+├── embeddings/                      # precomputed all-MiniLM-L6-v2 embeddings for fast-forward
+│   ├── movies_minilm.npy
+│   └── books_minilm.npy
 └── slides/
 ```
 
-Keep **checkpoint notebooks** for the end of each hands-on block so anyone who falls behind can catch up.
+The **solution notebooks are the checkpoints**: anyone who falls behind can open one and continue from the same Part.
+Session 2 also starts with a one-cell **fast-forward** that rebuilds everything from Session 1, so it works on its own.
 
 ---
 
@@ -216,6 +251,18 @@ Keep **checkpoint notebooks** for the end of each hands-on block so anyone who f
 
 **Goal:** understand the theory and finish with a working recommender built on TF-IDF + cosine similarity.
 **Deliverable:** a notebook where `recommend("The Dark Knight")` returns 5 sensible movies.
+
+| Part | Topic | Hands-on |
+|---|---|---|
+| 0 | Colab setup | Run your first cell |
+| 1 | Content-based vs collaborative filtering | Discussion |
+| 2 | Load TMDB 5000 from Hugging Face | |
+| 3 | Pandas in 10 minutes | Top 10 rated movies with at least 1,000 votes |
+| 4 | Parse JSON columns, build the text "soup" | Write `names()` |
+| 5 | Vectors and cosine similarity (toy example) | Write `cosine()` |
+| 6 | TF-IDF | Vectorize all movies |
+| 7 | `recommend()` | Write the 3 core lines |
+| 8 | Try your favourite movies | Pick 3 movies |
 
 ### Cosine similarity in one minute
 
@@ -236,9 +283,31 @@ cosine_similarity(a, b) = (a . b) / (|a| x |b|)
 **Goal:** upgrade the baseline with semantic embeddings, compare approaches, and ship an interactive app.
 **Deliverable:** a shareable recommender app each participant can publish to GitHub and put on their CV.
 
+| Part | Topic | Hands-on |
+|---|---|---|
+| 0 | Setup and fast-forward through Session 1 | |
+| 1 | Sentence embeddings for every movie (Drive or precomputed cache) | Recommend with `emb` |
+| 2 | TF-IDF vs embeddings side by side | Find a disagreement |
+| 3 | Evaluation: hit rate@5 on known pairs | Write `hit_rate_at_k()` |
+| 4 | Gemini explains the recommendations (RAG) | Write the prompt |
+| 5 | Gradio app with a public link | Connect the app |
+| 6 | Your turn: songs (audio features) or books (text) | Build the vectors |
+| 7 | Optional: visualise the embedding space with UMAP | |
+
 ### The TF-IDF vs embeddings moment
 
 TF-IDF matches **words**. Embeddings match **meaning**. Try a movie whose overview uses unusual vocabulary and compare the two result lists side by side. Participants should see embeddings finding thematically related films that share almost no words.
+Good examples: *Finding Nemo* (TF-IDF: *The Reef*, *Midnight Special*. Embeddings: *Ponyo*, *20,000 Leagues Under the Sea*) and *The Notebook*.
+
+### The evaluation result
+
+On 28 hand-written "obviously similar" pairs, TF-IDF scores a hit rate@5 of 0.86 and embeddings 0.82. Sequels share names, which favours TF-IDF, and neither method finds the harder "same vibe" pairs such as *Frozen* and *Tangled*.
+No single representation wins everywhere (see the hybrid stretch goal).
+
+### Retrieve, then generate
+
+The recommender *retrieves* 5 movies. Gemini then *generates* a one-line reason for each, using only the retrieved plot summaries.
+This is retrieval-augmented generation (RAG), the same pattern behind most LLM products.
 
 ---
 
@@ -262,11 +331,14 @@ def recommend(query, vectors, df, title_col="title", k=5):
         raise ValueError(f"'{query}' not found. Did you mean: {close}")
     i = df.index.get_loc(matches[0])
     sims = cosine_similarity(vectors[i:i+1], vectors).ravel()   # one row only, never the full matrix
-    top = np.argsort(-sims)[1:k+1]                              # skip index 0 (the item itself)
+    sims[i] = -np.inf                                           # never recommend the item itself
+    top = np.argsort(-sims)[:k]                                 # (safer than skipping index 0: duplicates can also score 1.0)
     out = df.iloc[top].copy()
     out["similarity"] = sims[top].round(3)
     return out
 ```
+
+The notebooks use the same function with a slightly friendlier lookup (`find_index`), which also accepts partial titles such as `"harry potter"`.
 
 ### 8.2 Movies: clean, TF-IDF, embeddings
 
@@ -325,7 +397,7 @@ print(emb.shape)   # (n_movies, 384)
 recommend("The Dark Knight", emb, movies)[["title", "similarity"]]
 ```
 
-On free-tier CPU, expect this encoding step to take a few minutes for about 4,800 movies. It is much faster with a GPU. **Save the result to Drive or share a precomputed file** (see section 3.5).
+On free-tier CPU, expect this encoding step to take a few minutes for about 4,800 movies. It is much faster with a GPU. **Save the result to Drive or share a precomputed file** (see section 3.4 and the `embeddings/` folder).
 
 ### 8.3 Songs: audio-feature vectors
 
@@ -365,15 +437,15 @@ import pandas as pd
 from ast import literal_eval
 
 URL = "https://raw.githubusercontent.com/malcolmosh/goodbooks-10k/master/books_enriched.csv"
-books = pd.read_csv(URL, index_col=[0], converters={"genres": literal_eval})
+books = pd.read_csv(URL, index_col=[0], converters={"genres": literal_eval, "authors": literal_eval})
 print(books.columns.tolist())      # confirm the column names first
 
 books["description"] = books["description"].fillna("")
-books["soup"] = (
-    books["title"] + ". " + books["authors"].astype(str) + ". "
-    + books["description"] + " Genres: " + books["genres"].apply(lambda g: ", ".join(g))
+books["soup"] = (                  # genres before the description: MiniLM only reads the first ~256 words
+    books["title"] + ". By " + books["authors"].apply(", ".join) + ". Genres: "
+    + books["genres"].apply(", ".join) + ". " + books["description"]
 )
-books = books.drop_duplicates("title").reset_index(drop=True)
+books = books.sort_values("ratings_count", ascending=False).drop_duplicates("title").reset_index(drop=True)
 books = books[books["soup"].str.len() > 40].reset_index(drop=True)
 
 # Reuse exactly the same pipeline as movies:
@@ -382,7 +454,8 @@ Xb = TfidfVectorizer(stop_words="english", max_features=20000).fit_transform(boo
 recommend("The Hobbit", Xb, books)[["title", "similarity"]]
 ```
 
-Embedding about 10,000 book descriptions on CPU takes longer than the movies (several minutes). Precompute it before the session and share the `.npy` file.
+Book titles include series information, such as `"Harry Potter and the Sorcerer's Stone (Harry Potter, #1)"`, so the notebook's partial-title lookup is handy here.
+Embedding about 10,000 book descriptions on CPU takes longer than the movies (several minutes). A precomputed file is in `embeddings/books_minilm.npy` and the notebook loads it automatically.
 
 ### 8.5 Gradio app
 
@@ -405,6 +478,7 @@ demo.launch(share=True)     # prints a temporary public link
 ```
 
 The dropdown is searchable, so users can type to filter. The `share=True` link is temporary and only works while the notebook is running.
+The Session 2 notebook adds a "✨ Explain with Gemini" checkbox, so the app can also show why each movie was picked.
 
 ### 8.6 Optional: visualise the embedding space
 
@@ -418,6 +492,25 @@ plt.scatter(coords[:, 0], coords[:, 1], s=3, alpha=0.5)
 plt.title("Movie embeddings projected to 2D")
 plt.show()
 ```
+
+### 8.7 Gemini: explain the recommendations
+
+```python
+from google import genai
+from google.colab import userdata
+
+client = genai.Client(api_key=userdata.get("GOOGLE_API_KEY"))   # key stored in Colab Secrets
+recs = recommend("Interstellar", emb, movies)
+plots = "\n".join(f"- {r.title}: {r.overview}" for r in recs.itertuples())
+prompt = f"""Someone loved Interstellar. Our recommender suggested:
+{plots}
+For each movie write one bullet: **Title** - why a fan would enjoy it (max 25 words).
+Use ONLY the plots above."""
+print(client.models.generate_content(model="gemini-flash-latest", contents=prompt).text)
+```
+
+No key? Inside Colab, `from google.colab import ai; ai.generate_text(prompt)` works without one. The notebook's `ask_gemini()` helper tries both.
+
 ---
 
 ## 9. Troubleshooting
@@ -433,6 +526,9 @@ plt.show()
 | Embedding step is very slow | Use the precomputed `.npy` file, or reduce the dataset size |
 | Gradio link does not appear | Re-run the launch cell, and make sure `share=True` is set |
 | Recommendations look strange | Print the `soup` text of both items and check what the model actually sees |
+| `Gemini call failed: 429 RESOURCE_EXHAUSTED` | Free-tier rate limit. Wait a minute, or set `GEMINI_MODEL = "gemini-flash-lite-latest"` |
+| `Gemini call failed: 400 API key not valid` | Re-copy the key from [AI Studio](https://aistudio.google.com/apikey) into the `GOOGLE_API_KEY` secret |
+| Gemini says nothing at all | Check the 🔑 Secrets panel: the secret must be named `GOOGLE_API_KEY` with **Notebook access** switched on. Or skip Gemini, since everything else still works |
 
 ---
 
@@ -443,19 +539,20 @@ plt.show()
 - **Filters:** restrict results by genre, year or minimum rating.
 - **Popularity bias:** discuss why popular items dominate, and try re-ranking by `vote_count`.
 - **Collaborative filtering:** use MovieLens ratings and compare the two approaches.
-- **Evaluate:** write 10 "obviously similar" pairs (for example sequels) and measure how often each method ranks them in the top 5.
+- **Extend the evaluation:** Session 2 measures hit rate@5 on 28 pairs. Add your own pairs and evaluate the hybrid score.
 - **Deploy permanently:** host the app on Hugging Face Spaces (free) instead of a temporary Gradio link.
 - **Better text models:** try `all-mpnet-base-v2` (better quality, slower).
 
 ---
 
-## 13. Credits and licenses
+## 11. Credits and licenses
 
 - **TMDB 5000 Movies:** data from [The Movie Database (TMDB)](https://www.themoviedb.org/). This project uses TMDB data but is not endorsed or certified by TMDB. Hugging Face mirror used: `AiresPucrs/tmdb-5000-movies`.
 - **Spotify Tracks Dataset:** `maharshipandya/spotify-tracks-dataset` on Hugging Face (collected via the Spotify Web API; dataset card lists a BSD license).
 - **Goodbooks-10k:** by Zygmunt Zajac ([zygmuntz/goodbooks-10k](https://github.com/zygmuntz/goodbooks-10k)); extended version with descriptions from [malcolmosh/goodbooks-10k-extended](https://github.com/malcolmosh/goodbooks-10k-extended).
 - **MovieLens:** GroupLens Research, University of Minnesota.
 - Embedding model: `sentence-transformers/all-MiniLM-L6-v2`.
+- Gemini by Google, accessed through the [Gemini API](https://ai.google.dev) (Google AI Studio) or Colab's built-in Gemini access.
 
 
 ---
